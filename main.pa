@@ -1,0 +1,87 @@
+class BufferLoader:
+  def BufferLoader(context, urlList, callback):
+    self.context = context
+    self.urlList = urlList
+    self.onload = callback
+    self.bufferList = new Array()
+    self.loadCount = 0
+  end
+
+  def loadBuffer(url, index):
+    # Load buffer asynchronously
+    var request = new XMLHttpRequest()
+    request.open("GET", url, true)
+    request.responseType = "arraybuffer"
+
+    request.onload = def ():
+      # Asynchronously decode the audio file data in request.response
+      self.context.decodeAudioData(
+        request.response,
+        def (buffer):
+          if not buffer:
+            alert("error decoding file data: " + url)
+            return
+          end
+          self.bufferList[index] = buffer
+          
+          self.loadCount += 1
+          if self.loadCount == self.urlList.length:
+            self.onload(self.bufferList)
+          end
+          
+          console.log("Load count:", self.loadCount, "of:", self.urlList.length)
+        end,
+        def (error):
+          console.error("decodeAudioData error", error)
+        end
+      )
+    end
+
+    request.onerror = def ():
+      alert("BufferLoader: XHR error")
+    end
+
+    request.send()
+  end
+
+  def load():
+    for i in [0 .. self.urlList.length-1]:
+      self.loadBuffer(self.urlList[i], i)
+    end
+  end
+
+end
+
+
+
+
+var context = 0
+
+var source = 0
+
+def finishedLoading(bufferList):
+  console.log("Finished loading")
+  # Create two sources and play them both together.
+  var source1 = context.createBufferSource()
+  var source2 = context.createBufferSource()  
+  source1.buffer = bufferList[0]
+  source2.buffer = bufferList[1]
+
+  source1.connect(context.destination)
+  source2.connect(context.destination)
+  source1.start(0)
+  source2.start(0)
+end
+
+def init():
+  # Fix up prefixing
+  window.AudioContext = window.AudioContext or window.webkitAudioContext
+  context = new window.AudioContext()
+  var files = ["./c.m4a", "./c.m4a"]
+  var bufferLoader = new BufferLoader(context, files, finishedLoading)
+
+  bufferLoader.load()
+end
+
+window.onload = init
+var bufferLoader = 0
