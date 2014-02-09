@@ -25,10 +25,10 @@ var BufferLoader = (function() {
     }
     self.bufferList[index] = buffer;
     (self.loadCount += 1);
+    console.debug("Loaded", url, self.loadCount, "/", self.urlList.length);
     if ((self.loadCount == self.urlList.length)) {
         self.onload(self.bufferList);
     }
-    console.log("Load count:", self.loadCount, "of:", self.urlList.length);
 }), (function (error) {
     console.error("decodeAudioData error", error);
 }));
@@ -59,34 +59,56 @@ var BufferLoader = (function() {
         }
     };
 
-
     return BufferLoader;
 })();
 
-
 var context = 0;
-
 var source = 0;
+
+var randomTime = function () {
+    var time = (Math.random() * 5000);
+    time = (Math.floor((time / 200)) * 200);
+    return time;
+};
 
 var finishedLoading = function (bufferList) {
     console.log("Finished loading");
     // Create two sources and play them both together.
-    var source1 = context.createBufferSource();
-    var source2 = context.createBufferSource();
-    source1.buffer = bufferList[0];
-    source2.buffer = bufferList[1];
 
-    source1.connect(context.destination);
-    source2.connect(context.destination);
-    source1.start(0);
-    source2.start(0);
+    var buffer;
+    for (var k = 0; k < bufferList.length; k += 1) {
+        buffer = bufferList[k];
+        var source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+        var start = (function (s) {
+    return (function () {
+    s.start(0);
+});
+});
+        setTimeout(start(source), randomTime());
+    }
 };
 
 var init = function () {
     // Fix up prefixing
     (window.AudioContext = window.AudioContext || window.webkitAudioContext);
     context = new window.AudioContext();
-    var files = ["./c.m4a", "./c.m4a"];
+    var files = [];
+    var i;
+    for (var k = 0; k < (function () {
+    var a = [];
+    for (var _i1 = 1; _i1 <= 16; _i1++) { a.push(_i1) }
+    return a;
+})().length; k += 1) {
+        i = (function () {
+    var a = [];
+    for (var _i1 = 1; _i1 <= 16; _i1++) { a.push(_i1) }
+    return a;
+})()[k];
+        files.push((("sounds/pianobell_" + i) + ".ogg"));
+        files.push((("sounds/woody_" + i) + ".ogg"));
+    }
     var bufferLoader = new BufferLoader(context, files, finishedLoading);
 
     bufferLoader.load();

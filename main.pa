@@ -1,86 +1,94 @@
 class BufferLoader:
-  def BufferLoader(context, urlList, callback):
-    self.context = context
-    self.urlList = urlList
-    self.onload = callback
-    self.bufferList = new Array()
-    self.loadCount = 0
-  end
+    def BufferLoader(context, urlList, callback):
+        self.context = context
+        self.urlList = urlList
+        self.onload = callback
+        self.bufferList = new Array()
+        self.loadCount = 0
+    end
 
-  def loadBuffer(url, index):
-    # Load buffer asynchronously
-    var request = new XMLHttpRequest()
-    request.open("GET", url, true)
-    request.responseType = "arraybuffer"
+    def loadBuffer(url, index):
+        # Load buffer asynchronously
+        var request = new XMLHttpRequest()
+        request.open("GET", url, true)
+        request.responseType = "arraybuffer"
 
-    request.onload = def ():
-      # Asynchronously decode the audio file data in request.response
-      self.context.decodeAudioData(
-        request.response,
-        def (buffer):
-          if not buffer:
-            alert("error decoding file data: " + url)
-            return
-          end
-          self.bufferList[index] = buffer
-          
-          self.loadCount += 1
-          if self.loadCount == self.urlList.length:
-            self.onload(self.bufferList)
-          end
-          
-          console.log("Load count:", self.loadCount, "of:", self.urlList.length)
-        end,
-        def (error):
-          console.error("decodeAudioData error", error)
+        request.onload = def ():
+            # Asynchronously decode the audio file data in request.response
+            self.context.decodeAudioData(
+                request.response,
+                def (buffer):
+                    if not buffer:
+                        alert("error decoding file data: " + url)
+                        return
+                    end
+                    self.bufferList[index] = buffer
+                    
+                    self.loadCount += 1
+                    console.debug("Loaded", url, self.loadCount, "/", self.urlList.length)
+                    if self.loadCount == self.urlList.length:
+                        self.onload(self.bufferList)
+                    end
+                end,
+                def (error):
+                    console.error("decodeAudioData error", error)
+                end
+            )
         end
-      )
+
+        request.onerror = def ():
+            alert("BufferLoader: XHR error")
+        end
+
+        request.send()
     end
 
-    request.onerror = def ():
-      alert("BufferLoader: XHR error")
+    def load():
+        for i in [0 .. self.urlList.length-1]:
+            self.loadBuffer(self.urlList[i], i)
+        end
     end
-
-    request.send()
-  end
-
-  def load():
-    for i in [0 .. self.urlList.length-1]:
-      self.loadBuffer(self.urlList[i], i)
-    end
-  end
-
 end
 
-
-
-
 var context = 0
-
 var source = 0
 
-def finishedLoading(bufferList):
-  console.log("Finished loading")
-  # Create two sources and play them both together.
-  var source1 = context.createBufferSource()
-  var source2 = context.createBufferSource()  
-  source1.buffer = bufferList[0]
-  source2.buffer = bufferList[1]
+def randomTime():
+    var time = Math.random() * 5000
+    time = Math.floor(time / 200) * 200
+    return time
+end
 
-  source1.connect(context.destination)
-  source2.connect(context.destination)
-  source1.start(0)
-  source2.start(0)
+def finishedLoading(bufferList):
+    console.log("Finished loading")
+    # Create two sources and play them both together.
+
+    for buffer in bufferList:
+        var source = context.createBufferSource()
+        source.buffer = buffer
+        source.connect(context.destination)
+        
+        var start = def (s):
+            return def ():
+                s.start(0)
+            end
+        end
+        setTimeout(start(source), randomTime())
+    end
 end
 
 def init():
-  # Fix up prefixing
-  window.AudioContext = window.AudioContext or window.webkitAudioContext
-  context = new window.AudioContext()
-  var files = ["./c.m4a", "./c.m4a"]
-  var bufferLoader = new BufferLoader(context, files, finishedLoading)
+    # Fix up prefixing
+    window.AudioContext = window.AudioContext or window.webkitAudioContext
+    context = new window.AudioContext()
+    var files = []
+    for i in [1..16]:
+        files.push("sounds/pianobell_" + i + ".ogg")
+        files.push("sounds/woody_" + i + ".ogg")
+    end
+    var bufferLoader = new BufferLoader(context, files, finishedLoading)
 
-  bufferLoader.load()
+    bufferLoader.load()
 end
 
 window.onload = init
