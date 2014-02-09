@@ -66,9 +66,16 @@ var context = 0;
 var source = 0;
 
 var randomTime = function () {
-    var time = (Math.random() * 5000);
-    time = (Math.floor((time / 200)) * 200);
+    var time = (Math.random() * 500000);
+    time = (Math.floor((time / 100)) * 100);
     return time;
+};
+
+var playSound = function (buffer, time) {
+    var source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    source.start(time);
 };
 
 var finishedLoading = function (bufferList) {
@@ -78,15 +85,24 @@ var finishedLoading = function (bufferList) {
     var buffer;
     for (var k = 0; k < bufferList.length; k += 1) {
         buffer = bufferList[k];
-        var source = context.createBufferSource();
-        source.buffer = buffer;
-        source.connect(context.destination);
-        var start = (function (s) {
+        var play = (function (b) {
     return (function () {
-    s.start(0);
+    playSound(b, 0);
 });
 });
-        setTimeout(start(source), randomTime());
+        var i;
+        for (var _k1 = 0; _k1 < (function () {
+    var a = [];
+    for (var _i1 = 0; _i1 <= 100; _i1++) { a.push(_i1) }
+    return a;
+})().length; _k1 += 1) {
+            i = (function () {
+    var a = [];
+    for (var _i1 = 0; _i1 <= 100; _i1++) { a.push(_i1) }
+    return a;
+})()[_k1];
+            setTimeout(play(buffer), randomTime());
+        }
     }
 };
 

@@ -54,9 +54,16 @@ var context = 0
 var source = 0
 
 def randomTime():
-    var time = Math.random() * 5000
-    time = Math.floor(time / 200) * 200
+    var time = Math.random() * 500000
+    time = Math.floor(time / 100) * 100
     return time
+end
+
+def playSound(buffer, time):
+  var source = context.createBufferSource()
+  source.buffer = buffer
+  source.connect(context.destination)
+  source.start(time)
 end
 
 def finishedLoading(bufferList):
@@ -64,16 +71,14 @@ def finishedLoading(bufferList):
     # Create two sources and play them both together.
 
     for buffer in bufferList:
-        var source = context.createBufferSource()
-        source.buffer = buffer
-        source.connect(context.destination)
-        
-        var start = def (s):
+        var play = def (b):
             return def ():
-                s.start(0)
+                playSound(b, 0)
             end
         end
-        setTimeout(start(source), randomTime())
+        for i in [0..100]:
+            setTimeout(play(buffer), randomTime())
+        end
     end
 end
 
